@@ -132,7 +132,7 @@ export const MapView = ({
                     </div>
                     {v.pdf_report && (
                       <a 
-                        href={`http://localhost:8000/api/reports/${v.id}/download`} 
+                        href={`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/reports/${v.id}/download`} 
                         target="_blank"
                         rel="noreferrer"
                         className="mt-2 block text-center bg-brand-600 hover:bg-brand-500 text-white rounded py-1 px-2 font-semibold text-[10px] transition-colors"

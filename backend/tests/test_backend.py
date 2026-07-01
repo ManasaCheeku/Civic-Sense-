@@ -71,6 +71,16 @@ def test_login_failure():
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect email or password"
 
+
+def test_login_includes_cors_headers_for_local_frontend():
+    response = client.post(
+        "/api/login",
+        json={"email": "testcitizen@civicsense.ai", "password": "password123"},
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:5173"
+
 def test_get_violations():
     response = client.get("/api/violations")
     assert response.status_code == 200

@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authenticating, setAuthenticating] = useState(false);
 
   useEffect(() => {
     // Restore session on mount
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    setLoading(true);
+    setAuthenticating(true);
     try {
       const response = await api.post('/api/login', { email, password });
       const { access_token, role, name, email: userEmail } = response.data;
@@ -42,12 +43,12 @@ export const AuthProvider = ({ children }) => {
       const message = error.response?.data?.detail || 'Login failed. Please check credentials.';
       return { success: false, error: message };
     } finally {
-      setLoading(false);
+      setAuthenticating(false);
     }
   };
 
   const register = async (name, email, password, role) => {
-    setLoading(true);
+    setAuthenticating(true);
     try {
       await api.post('/api/register', { name, email, password, role });
       return { success: true };
@@ -56,7 +57,7 @@ export const AuthProvider = ({ children }) => {
       const message = error.response?.data?.detail || 'Registration failed. Try again.';
       return { success: false, error: message };
     } finally {
-      setLoading(false);
+      setAuthenticating(false);
     }
   };
 
@@ -68,8 +69,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, token, loading, authenticating, login, register, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };
@@ -77,7 +78,15 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    return {
+      user: null,
+      token: null,
+      loading: false,
+      authenticating: false,
+      login: async () => ({ success: false, error: 'Authentication is unavailable.' }),
+      register: async () => ({ success: false, error: 'Registration is unavailable.' }),
+      logout: () => {},
+    };
   }
   return context;
 };

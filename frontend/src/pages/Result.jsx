@@ -12,7 +12,7 @@ import {
 export const Result = () => {
   const location = useLocation();
   const violations = location.state?.violations;
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
   if (!violations || violations.length === 0) {
     return <Navigate to="/upload" replace />;
