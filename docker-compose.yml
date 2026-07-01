@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: civicsense-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/reports:/app/reports
+    environment:
+      - ENV=production
+      - DATABASE_URL=sqlite:///./civicsense.db
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-me}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      - DEMO_ACCOUNTS_ENABLED=${DEMO_ACCOUNTS_ENABLED:-false}
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: civicsense-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: always
