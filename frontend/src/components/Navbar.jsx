@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { NavLink } from 'react-router-dom';
 import {
-  RiNotification3Line, RiLogoutBoxRLine,
+  RiLogoutBoxRLine,
   RiUser3Line, RiShieldCheckLine, RiShieldUserLine
 } from 'react-icons/ri';
 
@@ -31,14 +31,6 @@ export const Navbar = () => {
       {/* ── right actions ── */}
       {user && (
         <div className="flex items-center gap-3">
-          {/* notification bell */}
-          <button className="relative h-9 w-9 rounded-xl glass-light flex items-center justify-center text-slate-500 hover:text-brand-400 transition-colors border border-white/6">
-            <RiNotification3Line className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-brand-500" />
-          </button>
-
-          <div className="h-5 w-px bg-white/8" />
-
           {/* user pill */}
           <div className="flex items-center gap-2.5">
             {/* avatar */}
