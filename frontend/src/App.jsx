@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Result from './pages/Result';
 import History from './pages/History';
+import Evidence from './pages/Evidence';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
@@ -81,6 +82,14 @@ export function App() {
               element={
                 <PrivateRoute>
                   <History />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/evidence/:id" 
+              element={
+                <PrivateRoute>
+                  <Evidence />
                 </PrivateRoute>
               } 
             />

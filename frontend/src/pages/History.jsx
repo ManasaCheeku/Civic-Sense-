@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import {
@@ -289,6 +289,14 @@ export const History = () => {
               </div>
 
               {/* ── Download PDF ── */}
+              <Link
+                to={`/evidence/${sv.id}`}
+                className="btn-ghost w-full justify-center py-3 text-xs uppercase tracking-widest"
+              >
+                <RiFileShieldLine className="h-4 w-4 text-brand-400" />
+                Open Evidence File
+              </Link>
+
               {sv.pdf_report && (
                 <button
                   type="button"

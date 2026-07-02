@@ -312,7 +312,7 @@ export const Dashboard = () => {
                       </td>
                       <td className="py-3 px-3 text-right">
                         <Link
-                          to={`/history?id=${v.id}`}
+                          to={`/evidence/${v.id}`}
                           className="opacity-0 group-hover:opacity-100 transition-opacity btn-ghost text-[10px] py-1.5 px-3"
                         >
                           Inspect
