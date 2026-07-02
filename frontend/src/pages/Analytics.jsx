@@ -101,7 +101,7 @@ export const Analytics = () => {
           <span className="badge badge-live">Live</span>
         </div>
         <div className="flex-grow rounded-xl overflow-hidden">
-          <MapView violations={violations} zoom={12} />
+          <MapView violations={violations} heatmapPoints={analytics?.heatmap_points || []} zoom={12} />
         </div>
       </div>
 
@@ -175,15 +175,14 @@ export const Analytics = () => {
           </div>
           <div>
             <h3 className="font-display font-semibold text-sm text-slate-200 mb-1">
-              Municipal Heatmap Overlays
+              Live Heatmap Hotspots
               <span className="ml-2 badge" style={{ background: '#f59e0b12', color: '#f59e0b', border: '1px solid #f59e0b25' }}>
-                Concept
+                Live
               </span>
             </h3>
             <p className="text-[11px] text-slate-600 leading-relaxed max-w-2xl">
-              High-infraction hot spots mapped dynamically from live municipal camera systems.
-              Future updates will integrate CCTV feeds to highlight congestion corridors with
-              thermal overlays of double-parking patterns.
+              High-infraction hot spots are mapped from stored violation GPS coordinates.
+              Heat intensity increases with repeated incidents at the same location.
             </p>
           </div>
         </div>
@@ -193,8 +192,10 @@ export const Analytics = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/6 via-amber-500/5 to-cyan-500/6 animate-pulse" />
           <div className="relative text-center">
             <RiAlertLine className="h-6 w-6 text-slate-700 mx-auto mb-1" />
-            <div className="text-xs font-semibold text-slate-600">Live CCTV Heatmap Integration</div>
-            <div className="text-[10px] text-slate-700 mt-0.5">Coming in v2.0</div>
+            <div className="text-xs font-semibold text-slate-600">
+              {(analytics?.heatmap_points || []).length ? `${analytics.heatmap_points.length} active hotspot clusters` : 'No GPS-backed incidents yet'}
+            </div>
+            <div className="text-[10px] text-slate-700 mt-0.5">Live violation heatmap data</div>
           </div>
         </div>
       </div>

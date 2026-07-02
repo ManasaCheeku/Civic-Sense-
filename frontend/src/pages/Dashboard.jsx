@@ -82,6 +82,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats]           = useState(null);
+  const [analytics, setAnalytics]   = useState(null);
   const [violations, setViolations] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading]       = useState(true);
@@ -89,12 +90,14 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, violationsRes] = await Promise.all([
+        const [statsRes, violationsRes, analyticsRes] = await Promise.all([
           api.get('/api/dashboard'),
           api.get('/api/violations?limit=20'),
+          api.get('/api/analytics'),
         ]);
         setStats(statsRes.data);
         setViolations(violationsRes.data);
+        setAnalytics(analyticsRes.data);
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       } finally {
@@ -124,6 +127,14 @@ export const Dashboard = () => {
     { icon: <RiFileShieldLine className="h-5 w-5" />,  color: '#34d399', label: 'Reports Signed',   value: stats?.reports_generated,  sub: 'PDF',      delay: '160ms' },
     { icon: <RiCalendarCheckLine className="h-5 w-5" />,color: '#22d3ee',label: "Today's Cases",    value: stats?.today_cases,        sub: 'Live',     delay: '240ms' },
   ];
+
+  const repeatOffenders = [...(analytics?.repeat_offenders || [])]
+    .sort((a, b) => b.violation_count - a.violation_count);
+  const getRiskLevel = (count) => {
+    if (count >= 5) return { label: 'Critical', color: '#ef4444' };
+    if (count >= 3) return { label: 'High', color: '#f59e0b' };
+    return { label: 'Watch', color: '#818cf8' };
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto page-enter">
@@ -315,6 +326,47 @@ export const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {repeatOffenders.length > 0 && (
+        <div className="card rounded-3xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-display font-semibold text-sm text-slate-200">Repeat Offender Watchlist</h3>
+              <p className="text-[10px] text-slate-600 mt-0.5">Vehicles sorted by highest violation count</p>
+            </div>
+            <span className="badge badge-live">{repeatOffenders.length} active</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-white/5 text-slate-600 text-[10px] uppercase tracking-widest">
+                  <th className="py-2 px-3">Vehicle Number</th>
+                  <th className="py-2 px-3">Total Violations</th>
+                  <th className="py-2 px-3">Last Violation</th>
+                  <th className="py-2 px-3 text-right">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/4">
+                {repeatOffenders.map((offender) => {
+                  const risk = getRiskLevel(offender.violation_count);
+                  return (
+                    <tr key={offender.vehicle_number}>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-200">{offender.vehicle_number}</td>
+                      <td className="py-3 px-3 text-slate-400">{offender.violation_count}</td>
+                      <td className="py-3 px-3 text-slate-400">{offender.latest_violation}</td>
+                      <td className="py-3 px-3 text-right">
+                        <span className="badge" style={{ color: risk.color, border: `1px solid ${risk.color}35`, background: `${risk.color}12` }}>
+                          {risk.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
