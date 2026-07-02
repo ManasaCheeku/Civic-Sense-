@@ -18,6 +18,24 @@ except ImportError:
     logger.warning("reportlab or qrcode not installed. PDF generation will run in fallback mode.")
     HAS_REPORTLAB = False
 
+def resolve_evidence_path(path_value: str, output_pdf_path: str) -> str:
+    if not path_value:
+        return ""
+    if os.path.exists(path_value):
+        return path_value
+
+    reports_dir = os.path.dirname(os.path.abspath(output_pdf_path))
+    backend_dir = os.path.dirname(reports_dir)
+    normalized = path_value.replace("\\", "/")
+
+    if normalized.startswith("/uploads/") or normalized.startswith("uploads/"):
+        filename = os.path.basename(normalized)
+        candidate = os.path.join(backend_dir, "uploads", filename)
+        return candidate if os.path.exists(candidate) else path_value
+
+    candidate = os.path.join(backend_dir, normalized.lstrip("/"))
+    return candidate if os.path.exists(candidate) else path_value
+
 def generate_pdf_report(report_data: dict, output_pdf_path: str) -> bool:
     """
     Generates a professional PDF violation report.
@@ -228,8 +246,8 @@ def generate_pdf_report(report_data: dict, output_pdf_path: str) -> bool:
         left_img = None
         right_img = None
         
-        raw_path = report_data.get('image_path')
-        annotated_path = report_data.get('annotated_path')
+        raw_path = resolve_evidence_path(report_data.get('image_path'), output_pdf_path)
+        annotated_path = resolve_evidence_path(report_data.get('annotated_path'), output_pdf_path)
         
         # Fallback empty box helper
         def get_fallback_box(text):
