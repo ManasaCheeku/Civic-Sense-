@@ -40,3 +40,24 @@ class Violation(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     vehicle = relationship("Vehicle", back_populates="violations")
+
+    @property
+    def confidence_level(self):
+        if self.confidence >= 0.85:
+            return "High"
+        if self.confidence >= 0.65:
+            return "Medium"
+        return "Low"
+
+class GeofenceZone(Base):
+    __tablename__ = "geofence_zones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    radius_meters = Column(Float, nullable=False)
+    violation_type = Column(String, nullable=False)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

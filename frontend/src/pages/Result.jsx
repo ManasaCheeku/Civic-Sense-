@@ -30,6 +30,19 @@ export const Result = () => {
     return 'text-rose-400';
   };
 
+  const handleDownloadReport = async (violationId) => {
+    const { default: api } = await import('../utils/api');
+    const res = await api.get(`/api/reports/${violationId}/download`, { responseType: 'blob' });
+    const url = URL.createObjectURL(res.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `report_${violationId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       
@@ -80,7 +93,7 @@ export const Result = () => {
                 <div className="absolute bottom-4 left-4 bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1 flex items-center gap-1.5">
                   <div className={`h-2.5 w-2.5 rounded-full ${getConfidenceColor(v.confidence)}`}></div>
                   <span className={`text-[10px] font-bold ${getConfidenceTextColor(v.confidence)}`}>
-                    Score: {parseInt(v.confidence * 100)}%
+                    Score: {parseInt(v.confidence * 100)}% | {v.confidence_level || 'Unrated'}
                   </span>
                 </div>
               </div>
@@ -146,15 +159,14 @@ export const Result = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-800/40">
-                <a
-                  href={`${baseUrl}/api/reports/${v.id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadReport(v.id)}
                   className="flex-grow bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 hover:border-brand-500/35 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer text-xs uppercase tracking-wide"
                 >
                   <RiDownload2Line className="h-4 w-4" />
                   <span>Download Draft PDF</span>
-                </a>
+                </button>
                 
                 <Link
                   to="/history"

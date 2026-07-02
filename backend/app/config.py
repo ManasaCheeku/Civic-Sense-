@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     UPLOAD_DIR: str = os.path.join(BASE_DIR, "uploads")
     REPORT_DIR: str = os.path.join(BASE_DIR, "reports")
+    MAX_UPLOAD_SIZE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))
 
     class Config:
         env_file = ".env"

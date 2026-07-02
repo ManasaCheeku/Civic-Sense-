@@ -91,6 +91,22 @@ export const History = () => {
     }
   };
 
+  const handleDownloadReport = async (violationId) => {
+    try {
+      const res = await api.get(`/api/reports/${violationId}/download`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `report_${violationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to download report.');
+    }
+  };
+
   useEffect(() => { fetchViolations(); }, [statusFilter, searchQuery, paramId]);
 
   const handleStatusUpdate = async (newStatus) => {
@@ -246,7 +262,7 @@ export const History = () => {
               <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl"
                 style={{ background: 'rgba(13,15,31,0.5)', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <InfoRow label="Vehicle Type"      value={sv.vehicle?.vehicle_type || 'Unknown'} />
-                <InfoRow label="Detection Confidence" value={`${parseInt((sv.confidence || 0) * 100)}%`} />
+                <InfoRow label="Detection Confidence" value={`${parseInt((sv.confidence || 0) * 100)}% (${sv.confidence_level || 'Unrated'})`} />
                 <InfoRow label="GPS Coordinates"   value={sv.latitude ? `${sv.latitude?.toFixed(5)}, ${sv.longitude?.toFixed(5)}` : 'Not set'} mono />
                 <InfoRow label="Location"          value={sv.location || 'Unknown Street'} />
                 <InfoRow label="Reported"          value={new Date(sv.created_at).toLocaleString()} />
@@ -274,15 +290,14 @@ export const History = () => {
 
               {/* ── Download PDF ── */}
               {sv.pdf_report && (
-                <a
-                  href={`${baseUrl}/api/reports/${sv.id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadReport(sv.id)}
                   className="btn-ghost w-full justify-center py-3 text-xs uppercase tracking-widest"
                 >
                   <RiDownloadLine className="h-4 w-4 text-brand-400" />
                   Download Signed PDF Dossier
-                </a>
+                </button>
               )}
 
               {/* ── Decision buttons (authority only) ── */}

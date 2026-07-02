@@ -52,6 +52,11 @@ def setup_database():
 
 client = TestClient(app)
 
+def auth_header(email="testcitizen@civicsense.ai", password="password123"):
+    response = client.post("/api/login", json={"email": email, "password": password})
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
 def test_login_success():
     response = client.post(
         "/api/login",
@@ -82,12 +87,12 @@ def test_login_includes_cors_headers_for_local_frontend():
     assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:5173"
 
 def test_get_violations():
-    response = client.get("/api/violations")
+    response = client.get("/api/violations", headers=auth_header())
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 def test_get_dashboard():
-    response = client.get("/api/dashboard")
+    response = client.get("/api/dashboard", headers=auth_header())
     assert response.status_code == 200
     data = response.json()
     assert "total_violations" in data
@@ -95,7 +100,7 @@ def test_get_dashboard():
     assert "recent_reports" in data
 
 def test_get_analytics():
-    response = client.get("/api/analytics")
+    response = client.get("/api/analytics", headers=auth_header())
     assert response.status_code == 200
     data = response.json()
     assert "violation_trends" in data

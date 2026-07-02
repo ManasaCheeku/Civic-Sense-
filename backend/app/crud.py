@@ -27,6 +27,82 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
+# Geofence operations
+DEFAULT_GEOFENCE_ZONES = [
+    {
+        "name": "St. Jude Hospital - Emergency Access Area",
+        "latitude": 40.73061,
+        "longitude": -73.93524,
+        "radius_meters": 50.0,
+        "violation_type": "Hospital Emergency Entrance",
+    },
+    {
+        "name": "Metro High School - Student drop-off zone",
+        "latitude": 40.73161,
+        "longitude": -73.93624,
+        "radius_meters": 30.0,
+        "violation_type": "School / College Entrance",
+    },
+    {
+        "name": "Downtown Boulevard - Official No-Parking Segment",
+        "latitude": 40.72961,
+        "longitude": -73.93424,
+        "radius_meters": 40.0,
+        "violation_type": "No Parking Zone",
+    },
+]
+
+def seed_geofence_zones(db: Session):
+    if db.query(models.GeofenceZone).count() > 0:
+        return
+    for zone in DEFAULT_GEOFENCE_ZONES:
+        db.add(models.GeofenceZone(**zone))
+    db.commit()
+
+def get_geofence_zones(db: Session, active_only: bool = False):
+    query = db.query(models.GeofenceZone)
+    if active_only:
+        query = query.filter(models.GeofenceZone.is_active == 1)
+    return query.order_by(models.GeofenceZone.name.asc()).all()
+
+def get_geofence_zone(db: Session, zone_id: int):
+    return db.query(models.GeofenceZone).filter(models.GeofenceZone.id == zone_id).first()
+
+def create_geofence_zone(db: Session, zone: schemas.GeofenceZoneCreate):
+    db_zone = models.GeofenceZone(
+        name=zone.name,
+        latitude=zone.latitude,
+        longitude=zone.longitude,
+        radius_meters=zone.radius_meters,
+        violation_type=zone.violation_type,
+        is_active=1 if zone.is_active else 0,
+    )
+    db.add(db_zone)
+    db.commit()
+    db.refresh(db_zone)
+    return db_zone
+
+def update_geofence_zone(db: Session, zone_id: int, zone_update: schemas.GeofenceZoneUpdate):
+    db_zone = get_geofence_zone(db, zone_id)
+    if not db_zone:
+        return None
+    for field, value in zone_update.model_dump(exclude_unset=True).items():
+        if field == "is_active":
+            value = 1 if value else 0
+        setattr(db_zone, field, value)
+    db_zone.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_zone)
+    return db_zone
+
+def delete_geofence_zone(db: Session, zone_id: int):
+    db_zone = get_geofence_zone(db, zone_id)
+    if not db_zone:
+        return False
+    db.delete(db_zone)
+    db.commit()
+    return True
+
 # Vehicle operations
 def get_vehicle_by_number(db: Session, vehicle_number: str):
     return db.query(models.Vehicle).filter(models.Vehicle.vehicle_number == vehicle_number).first()

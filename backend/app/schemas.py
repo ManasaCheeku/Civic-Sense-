@@ -68,9 +68,37 @@ class ViolationResponse(ViolationBase):
     vehicle_id: Optional[int] = None
     vehicle: Optional[VehicleResponse] = None
     review_status: str
+    confidence_level: str
     image_path: str
     annotated_image: Optional[str] = None
     pdf_report: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Geofence Schemas
+class GeofenceZoneBase(BaseModel):
+    name: str
+    latitude: float
+    longitude: float
+    radius_meters: float = Field(gt=0)
+    violation_type: str
+    is_active: bool = True
+
+class GeofenceZoneCreate(GeofenceZoneBase):
+    pass
+
+class GeofenceZoneUpdate(BaseModel):
+    name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    radius_meters: Optional[float] = Field(default=None, gt=0)
+    violation_type: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class GeofenceZoneResponse(GeofenceZoneBase):
+    id: int
     created_at: datetime
     updated_at: datetime
 
@@ -94,6 +122,19 @@ class RecentReport(BaseModel):
     review_status: str
     created_at: str
 
+class HeatmapPoint(BaseModel):
+    latitude: float
+    longitude: float
+    intensity: int
+    label: str
+
+class RepeatOffender(BaseModel):
+    vehicle_number: str
+    vehicle_type: str
+    violation_count: int
+    latest_violation: str
+    latest_status: str
+
 class DashboardStats(BaseModel):
     total_violations: int
     illegal_parking: int
@@ -108,3 +149,5 @@ class AnalyticsStats(BaseModel):
     distribution_by_type: List[ChartDataPoint]
     status_distribution: List[ChartDataPoint]
     monthly_trends: List[ChartDataPoint]
+    heatmap_points: List[HeatmapPoint] = []
+    repeat_offenders: List[RepeatOffender] = []

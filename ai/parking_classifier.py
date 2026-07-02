@@ -48,7 +48,24 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
     return R * c
 
-def classify_parking_violation(vehicle_type: str, latitude: float, longitude: float, manual_flags: dict = None) -> tuple:
+def _normalize_zone(zone):
+    if isinstance(zone, dict):
+        return zone
+    return {
+        "name": getattr(zone, "name", "Configured Zone"),
+        "latitude": getattr(zone, "latitude", None),
+        "longitude": getattr(zone, "longitude", None),
+        "radius_meters": getattr(zone, "radius_meters", 0),
+        "violation_type": getattr(zone, "violation_type", "No Parking Zone"),
+    }
+
+def classify_parking_violation(
+    vehicle_type: str,
+    latitude: float,
+    longitude: float,
+    manual_flags: dict = None,
+    restricted_zones: list = None
+) -> tuple:
     """
     Classifies the parking violation based on coordinates and manual/context flags.
     
@@ -57,6 +74,7 @@ def classify_parking_violation(vehicle_type: str, latitude: float, longitude: fl
         latitude: Incident latitude
         longitude: Incident longitude
         manual_flags: Optional flags passed from frontend (e.g. {"blocking_gate": True})
+        restricted_zones: Optional DB-backed geofence zones. Falls back to bundled defaults.
         
     Returns:
         tuple: (violation_type: str, confidence: float, recommended_action: str)
@@ -74,7 +92,11 @@ def classify_parking_violation(vehicle_type: str, latitude: float, longitude: fl
 
     # 2. Check GPS Coordinates against known restricted zones
     if latitude is not None and longitude is not None:
-        for zone in RESTRICTED_ZONES:
+        zones = restricted_zones if restricted_zones is not None else RESTRICTED_ZONES
+        for raw_zone in zones:
+            zone = _normalize_zone(raw_zone)
+            if zone["latitude"] is None or zone["longitude"] is None or not zone["radius_meters"]:
+                continue
             distance = haversine_distance(latitude, longitude, zone["latitude"], zone["longitude"])
             logger.info(f"Distance to {zone['name']}: {distance:.2f} meters")
             if distance <= zone["radius_meters"]:

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { CircleMarker, MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
 // Standard Leaflet marker fix
@@ -73,6 +73,7 @@ const LocationMarker = ({ position, setPosition, onPositionChange }) => {
 
 export const MapView = ({ 
   violations = [], 
+  heatmapPoints = [],
   interactive = false, 
   onLocationSelect = null, 
   center = [40.73061, -73.93524], // Default smart-city coordinates (St. Jude Hospital area)
@@ -132,12 +133,10 @@ export const MapView = ({
                     </div>
                     {v.pdf_report && (
                       <a 
-                        href={`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/reports/${v.id}/download`} 
-                        target="_blank"
-                        rel="noreferrer"
+                        href={`/history?id=${v.id}`}
                         className="mt-2 block text-center bg-brand-600 hover:bg-brand-500 text-white rounded py-1 px-2 font-semibold text-[10px] transition-colors"
                       >
-                        Download PDF Report
+                        Inspect Report
                       </a>
                     )}
                   </div>
@@ -146,6 +145,33 @@ export const MapView = ({
             );
           }
           return null;
+        })}
+
+        {!interactive && heatmapPoints.map((point, idx) => {
+          const radius = Math.min(34, 8 + point.intensity * 4);
+          return (
+            <CircleMarker
+              key={`${point.latitude}-${point.longitude}-${idx}`}
+              center={[point.latitude, point.longitude]}
+              radius={radius}
+              pathOptions={{
+                color: '#f97316',
+                fillColor: '#ef4444',
+                fillOpacity: 0.22,
+                weight: 1,
+              }}
+            >
+              <Popup>
+                <div className="text-slate-200 text-xs p-1">
+                  <div className="font-bold text-slate-100 uppercase tracking-wide border-b border-slate-700 pb-1 mb-1">
+                    Heatmap Hotspot
+                  </div>
+                  <div><b>Location:</b> {point.label}</div>
+                  <div><b>Incidents:</b> {point.intensity}</div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
         })}
       </MapContainer>
     </div>

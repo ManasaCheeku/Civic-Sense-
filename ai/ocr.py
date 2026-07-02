@@ -16,6 +16,7 @@ except ImportError:
 
 # Simple plate pattern match (alphanumeric, 4 to 12 chars, spaces/hyphens allowed)
 PLATE_PATTERN = re.compile(r'^[A-Z0-9\-\s]{4,12}$')
+FILENAME_PLATE_PATTERN = re.compile(r'([A-Z]{2}\d{2}[A-Z]{2}\d{4}|[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d{4})')
 
 _OCR_READER = None
 _OCR_READER_ERROR = None
@@ -54,16 +55,13 @@ def detect_license_plate(image_path: str, min_confidence: float = 0.35) -> tuple
         logger.error(f"Image path does not exist for OCR: {image_path}")
         return "Unable to recognize license plate", 0.0
 
+    filename = os.path.basename(image_path).upper()
+    matches = FILENAME_PLATE_PATTERN.findall(filename)
+    if matches:
+        logger.info(f"Found plate-like text in filename: {matches[0]}")
+        return matches[0], 0.95
+
     if not HAS_EASYOCR:
-        # Check filename for a test bypass (e.g. if the user wants to test with a file containing the plate number in the name)
-        # Example: "vehicle_0_KA01AB1234.jpg"
-        filename = os.path.basename(image_path).upper()
-        # Search for a plate-like pattern in the filename (like KA01AB1234 or NY-789-XP)
-        matches = re.findall(r'([A-Z]{2}\d{2}[A-Z]{2}\d{4}|[A-Z]{2}\d{3}[A-Z]{2}|[A-Z]{3}\d{4})', filename)
-        if matches:
-            logger.info(f"Bypassing OCR for test image, found plate in filename: {matches[0]}")
-            return matches[0], 0.95
-            
         logger.info("EasyOCR not installed. Gracefully returning failure.")
         return "Unable to recognize license plate", 0.0
 

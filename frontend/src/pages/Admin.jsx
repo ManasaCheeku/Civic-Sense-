@@ -1,66 +1,70 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RiShieldKeyholeLine, RiMapPinRangeLine, RiAddLine, RiDeleteBin6Line } from 'react-icons/ri';
+import api from '../utils/api';
 
 export const Admin = () => {
-  // Local state for configuration rules (mirrors the backend python rules)
-  const [zones, setZones] = useState([
-    {
-      id: 1,
-      name: "St. Jude Hospital - Emergency Access Area",
-      latitude: 40.73061,
-      longitude: -73.93524,
-      radius_meters: 50.0,
-      violation_type: "Hospital Emergency Entrance"
-    },
-    {
-      id: 2,
-      name: "Metro High School - Student drop-off zone",
-      latitude: 40.73161,
-      longitude: -73.93624,
-      radius_meters: 30.0,
-      violation_type: "School / College Entrance"
-    },
-    {
-      id: 3,
-      name: "Downtown Boulevard - Official No-Parking Segment",
-      latitude: 40.72961,
-      longitude: -73.93424,
-      radius_meters: 40.0,
-      violation_type: "No Parking Zone"
-    }
-  ]);
-
+  const [zones, setZones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [name, setName] = useState('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [radius, setRadius] = useState(30);
   const [violationType, setViolationType] = useState('No Parking Zone');
 
-  const handleAddZone = (e) => {
+  const fetchZones = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.get('/api/geofences');
+      setZones(res.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to load geofence zones.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchZones(); }, []);
+
+  const handleAddZone = async (e) => {
     e.preventDefault();
     if (!name || !lat || !lng) {
-      alert("Please fill in name, latitude and longitude.");
+      setError("Please fill in name, latitude and longitude.");
       return;
     }
-    
-    const newZone = {
-      id: Date.now(),
+
+    setSaving(true);
+    setError('');
+    try {
+      const res = await api.post('/api/geofences', {
       name,
       latitude: parseFloat(lat),
       longitude: parseFloat(lng),
       radius_meters: parseFloat(radius),
-      violation_type: violationType
-    };
-    
-    setZones(prev => [...prev, newZone]);
-    setName('');
-    setLat('');
-    setLng('');
-    alert("New geo-fence zoning rule created successfully! (Simulated locally for MVP)");
+        violation_type: violationType,
+        is_active: true,
+      });
+      setZones(prev => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)));
+      setName('');
+      setLat('');
+      setLng('');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to create geofence zone.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteZone = (id) => {
-    setZones(prev => prev.filter(z => z.id !== id));
+  const handleDeleteZone = async (id) => {
+    setError('');
+    try {
+      await api.delete(`/api/geofences/${id}`);
+      setZones(prev => prev.filter(z => z.id !== id));
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to remove geofence zone.');
+    }
   };
 
   return (
@@ -72,6 +76,12 @@ export const Admin = () => {
         <p className="text-slate-400 text-xs mt-0.5">Configure compliance criteria, manage geofenced zones, and override AI settings</p>
       </div>
 
+      {error && (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
         {/* Left Columns: Zones List (Column span 2) */}
@@ -82,7 +92,11 @@ export const Admin = () => {
           </div>
 
           <div className="space-y-3">
-            {zones.map((z) => (
+            {loading ? (
+              <div className="py-10 text-center text-xs text-slate-500">Loading geofence rules...</div>
+            ) : zones.length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-500">No geofence rules configured.</div>
+            ) : zones.map((z) => (
               <div 
                 key={z.id} 
                 className="flex items-start justify-between bg-slate-900/40 border border-slate-800 p-4 rounded-2xl text-xs hover:border-slate-700/60 transition-all"
@@ -189,6 +203,7 @@ export const Admin = () => {
             >
               <RiAddLine className="h-4.5 w-4.5" />
               <span>Create Rule</span>
+              {saving && <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin" />}
             </button>
 
           </form>
