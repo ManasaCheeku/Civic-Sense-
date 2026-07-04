@@ -1,4 +1,6 @@
 import os
+import logging
+import secrets
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -10,7 +12,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./civicsense.db")
 
     # Security Settings
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     CORS_ORIGINS: str = os.getenv(
@@ -30,6 +32,12 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 settings = Settings()
+
+if not settings.SECRET_KEY:
+    logging.getLogger("Config").warning(
+        "SECRET_KEY is not set. Using an ephemeral runtime JWT secret; set SECRET_KEY in the environment for stable sessions."
+    )
+    settings.SECRET_KEY = secrets.token_urlsafe(48)
 
 # Ensure directories exist
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
