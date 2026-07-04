@@ -1,0 +1,23 @@
+# Python
+**/__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Databases
+*.db
+
+# AI models
+*.pt
+
+# Generated files
+backend/uploads/
+backend/reports/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Environment
+.env
